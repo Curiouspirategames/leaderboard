@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#161b35;--bg2:#1d2340;--surface:#2c345a;--surface2:#363f6b;--surface3:#404a7a;
+  --gold:#ffc857;--gold-bright:#ffe18a;--gold-dim:#d4a040;
+  --teal:#3acab0;--teal-bright:#5ee0c8;
+  --rose:#e85a7a;--rose-bright:#ff7a98;
+  --text:#e8e3d0;--text-dim:#b8b0a0;--text-bright:#ffffff;
+  --border:#4a5380;--border-gold:#a07a30;
+  --rank1:#ffe18a;--rank2:#e0e6f0;--rank3:#ff9550;
+  --crimson:#c63e3e;--r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:'EB Garamond',serif;font-size:16px;
+  background-image:radial-gradient(ellipse 70% 50% at 15% 5%,rgba(255,200,87,.12) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 60% at 90% 95%,rgba(58,202,176,.1) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,rgba(232,90,122,.05) 0%,transparent 70%);}
+
+#setupBanner{display:none;background:linear-gradient(90deg,#1a0a00,#2a1500,#1a0a00);
+  border-bottom:1px solid #8b3a00;padding:.75rem 1.5rem;text-align:center;
+  font-family:'Rajdhani',sans-serif;font-size:.85rem;color:#ffaa44;letter-spacing:.05em;}
+#setupBanner a{color:#ffcc66;text-decoration:underline;cursor:pointer;}
+
+#appHeader{text-align:center;padding:2.5rem 1rem 2rem;border-bottom:1px solid var(--border-gold);position:relative;}
+#appHeader::before{content:'';display:block;width:120px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);margin:0 auto 1.25rem;}
+#appHeader::after{content:'';display:block;width:180px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);margin:1rem auto 0;}
+.header-icon{font-size:2.5rem;display:block;margin-bottom:.5rem;filter:drop-shadow(0 0 12px rgba(212,168,67,.4));}
+#mainTitle{font-family:'Cinzel',serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;
+  color:var(--gold-bright);letter-spacing:.08em;text-shadow:0 0 40px rgba(212,168,67,.3),0 2px 4px rgba(0,0,0,.5);}
+#mainSubtitle{font-family:'Rajdhani',sans-serif;font-size:.8rem;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--text-dim);margin-top:.4rem;}
+
+#viewNav{display:flex;justify-content:center;align-items:center;gap:.5rem;padding:.75rem;
+  background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.nav-tab{font-family:'Rajdhani',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;
+  padding:.45rem 1.1rem;border:1px solid var(--border);border-radius:999px;background:none;
+  color:var(--text-dim);cursor:pointer;transition:all .2s;}
+.nav-tab:hover{color:var(--text);border-color:var(--border-gold);}
+.nav-tab.active{background:var(--gold-dim);color:var(--gold-bright);border-color:var(--gold-dim);}
+#adminGateBtn{font-family:'Rajdhani',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;
+  padding:.45rem 1rem;border:1px solid var(--border-gold);border-radius:999px;background:none;
+  color:var(--gold-dim);cursor:pointer;transition:all .2s;margin-left:.5rem;}
+#adminGateBtn:hover{color:var(--gold);}
+#adminBadge{font-family:'Rajdhani',sans-serif;font-size:.7rem;letter-spacing:.15em;color:var(--gold);
+  background:rgba(212,168,67,.08);border:1px solid var(--gold-dim);padding:.25rem .7rem;
+  border-radius:4px;margin-left:.5rem;}
+
+#mainContent{max-width:1000px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+
+.lb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+.lb-title{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);font-weight:600;}
+.lb-desc{font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:.75rem;}
+.lb-grid{display:flex;flex-direction:column;gap:.5rem;}
+.lb-row{display:grid;grid-template-columns:36px 1fr 100px 70px;align-items:center;gap:.75rem;
+  padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);transition:border-color .2s,transform .2s;position:relative;overflow:hidden;
+  box-shadow:0 2px 4px rgba(0,0,0,.2);}
+@media(max-width:480px){.lb-row{grid-template-columns:28px 1fr 60px;}.lb-bar-wrap{display:none;}}
+.lb-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border);}
+.lb-row.r1::before{background:var(--rank1);box-shadow:0 0 8px var(--rank1);}
+.lb-row.r2::before{background:var(--rank2);}
+.lb-row.r3::before{background:var(--rank3);}
+.lb-row:hover{border-color:var(--border-gold);transform:translateX(2px);}
+.lb-rank{font-family:'Cinzel',serif;font-size:.9rem;font-weight:600;text-align:center;}
+.lb-rank.r1{color:var(--rank1);}.lb-rank.r2{color:var(--rank2);}
+.lb-rank.r3{color:var(--rank3);}.lb-rank.rn{color:var(--text-dim);}
+.lb-name{font-size:1.05rem;font-weight:500;color:var(--text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-bar-wrap{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;}
+.lb-bar{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.bar-1{background:linear-gradient(90deg,#8b6a00,var(--rank1));}
+.bar-2{background:linear-gradient(90deg,#5a6070,var(--rank2));}
+.bar-3{background:linear-gradient(90deg,#6a3a10,var(--rank3));}
+.bar-n{background:linear-gradient(90deg,var(--surface3),var(--text-dim));}
+.lb-pts{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:600;color:var(--gold);text-align:right;white-space:nowrap;}
+.lb-pts .unit{font-size:.72rem;color:var(--text);opacity:.7;}
+.lb-empty{text-align:center;padding:3rem;color:var(--text-dim);font-style:italic;}
+
+.btn-share{display:inline-flex;align-items:center;gap:.4rem;font-family:'Rajdhani',sans-serif;
+  font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;padding:.45rem 1rem;
+  background:rgba(255,200,87,.15);border:1px solid var(--gold);border-radius:5px;
+  color:var(--gold-bright);cursor:pointer;transition:all .2s;font-weight:600;}
+.btn-share:hover{background:rgba(255,200,87,.25);}
+
+#adminPanel{display:none;margin-top:1.5rem;}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+@media(max-width:650px){.admin-grid{grid-template-columns:1fr;}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);}
+.card-head{padding:.7rem 1rem;background:var(--bg2);border-bottom:1px solid var(--border-gold);
+  display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Rajdhani',sans-serif;font-size:.78rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--gold);font-weight:600;}
+.card-body{padding:1rem;}
+
+label{display:block;font-family:'Rajdhani',sans-serif;font-size:.75rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--text-dim);margin-bottom:.3rem;font-weight:500;}
+input[type=text],input[type=number],input[type=password],select,textarea{
+  width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:5px;
+  padding:.5rem .75rem;color:var(--text-bright);font-family:'EB Garamond',serif;
+  font-size:.95rem;outline:none;transition:border-color .2s;}
+input::placeholder,textarea::placeholder{color:var(--text-dim);opacity:.85;font-style:italic;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:55px;}
+.fg{margin-bottom:.7rem;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;}
+@media(max-width:480px){.row2,.row3{grid-template-columns:1fr;}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+  padding:.5rem 1.1rem;border:none;border-radius:5px;font-family:'Rajdhani',sans-serif;
+  font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  transition:all .2s;white-space:nowrap;}
+.btn-full{width:100%;margin-top:.65rem;}
+.btn-gold{background:var(--gold-dim);color:var(--gold-bright);border:1px solid #5a4010;}
+.btn-gold:hover{background:#8a6020;}
+.btn-teal{background:rgba(26,122,106,.25);color:var(--teal-bright);border:1px solid var(--teal);}
+.btn-teal:hover{background:rgba(26,122,106,.4);}
+.btn-ghost{background:none;color:var(--text-dim);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-dim);}
+.btn-danger{background:rgba(120,26,26,.3);color:#e08080;border:1px solid var(--crimson);
+  font-size:.72rem;padding:.3rem .6rem;}
+.btn-danger:hover{background:rgba(120,26,26,.5);}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.65rem;}
+
+.chip-list{display:flex;flex-direction:column;gap:.35rem;max-height:220px;overflow-y:auto;}
+.chip{display:flex;align-items:center;gap:.5rem;padding:.45rem .75rem;
+  background:var(--bg2);border:1px solid var(--border);border-radius:5px;font-size:.92rem;}
+.chip-name{flex:1;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chip-sub{font-family:'EB Garamond',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:.1rem;}
+.chip-pts{font-family:'Rajdhani',sans-serif;font-size:.9rem;color:var(--gold-bright);min-width:48px;text-align:right;font-weight:600;}
+
+.log-item{padding:.45rem 0;border-bottom:1px solid var(--border);font-size:.85rem;line-height:1.4;}
+.log-item:last-child{border-bottom:none;}
+.log-meta{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;}
+.log-time{font-family:'Rajdhani',sans-serif;font-size:.68rem;color:var(--text-dim);}
+.lp-pos{color:#70d090;}.lp-neg{color:#e08080;}.lp-tr{color:var(--teal-bright);}
+.log-comment{color:var(--text-dim);font-style:italic;font-size:.82rem;margin-top:.1rem;}
+.log-scroll{max-height:240px;overflow-y:auto;}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:900;
+  align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border-gold);border-radius:10px;
+  padding:1.75rem;width:min(440px,95vw);position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Cinzel',serif;color:var(--gold);font-size:1.05rem;
+  margin-bottom:1.25rem;letter-spacing:.05em;}
+.modal-close{position:absolute;top:.9rem;right:1rem;background:none;border:none;
+  color:var(--text-dim);cursor:pointer;font-size:1.1rem;line-height:1;}
+
+.divider{display:flex;align-items:center;gap:.6rem;margin:1rem 0;color:var(--gold-dim);
+  font-family:'Rajdhani',sans-serif;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;font-weight:600;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--surface2);border:1px solid var(--gold-dim);color:var(--gold-bright);
+  padding:.6rem 1.5rem;border-radius:999px;font-family:'Rajdhani',sans-serif;
+  font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;z-index:9999;
+  transition:transform .3s ease;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.err{border-color:var(--crimson);color:#e08080;}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);
+  border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SHARE TABS */
+.share-tabs{display:flex;gap:.25rem;margin:1rem 0 .85rem;border-bottom:1px solid var(--border);}
+.share-tab{flex:1;background:none;border:none;padding:.55rem .5rem;font-family:'Rajdhani',sans-serif;
+  font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);
+  cursor:pointer;transition:color .2s;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.share-tab:hover{color:var(--text);}
+.share-tab.active{color:var(--gold-bright);border-bottom-color:var(--gold);}
+.share-tab-pane{display:none;}
+.share-tab-pane.active{display:block;}
+
+/* DISCORD PREVIEW — mimics Discord's dark theme */
+.discord-preview{background:#313338;color:#dbdee1;border-radius:6px;padding:.8rem 1rem;
+  font-family:'gg sans','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.92rem;
+  line-height:1.4;border:1px solid #1e1f22;max-height:340px;overflow-y:auto;
+  margin-top:.4rem;}
+.discord-preview .author{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;}
+.discord-preview .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ffc857,#ff7a98);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.discord-preview .name{color:#ffc857;font-weight:600;font-size:.92rem;}
+.discord-preview .ts{color:#949ba4;font-size:.7rem;}
+.discord-preview pre{background:#2b2d31;border-radius:4px;padding:.55rem .75rem;
+  font-family:'Consolas','Courier New',monospace;font-size:.78rem;line-height:1.35;
+  white-space:pre;overflow-x:auto;margin:.3rem 0;color:#dbdee1;}
+.discord-preview pre.ansi{background:#2b2d31;}
+.discord-preview .ansi-yellow{color:#e5c07b;}
+.discord-preview .ansi-red{color:#e06c75;}
+.discord-preview .ansi-cyan{color:#56b6c2;}
+.discord-preview .ansi-white{color:#dcdfe4;}
+.discord-preview .ansi-grey{color:#7f848e;}
+.discord-preview .ansi-green{color:#98c379;}
+.discord-preview .body{color:#dbdee1;}
+.discord-preview b{font-weight:700;color:#fff;}
+.discord-preview .header-line{color:#fff;font-weight:600;}
+.discord-preview hr{border:none;border-top:1px solid #3f4147;margin:.4rem 0;}
+</style>
+</head>
+<body>
+
+<div id="setupBanner">
+  ⚠ Firebase not configured — running in <strong>local demo mode</strong> (data stays on this device only).
+  <a onclick="document.getElementById('setupModal').classList.add('open')">View setup instructions</a>
+</div>
+
+<header id="appHeader">
+  <span class="header-icon" id="headerIcon">⚔️</span>
+  <div id="mainTitle">The Leaderboard</div>
+  <div id="mainSubtitle">Monthly Games Tracker</div>
+</header>
+
+<nav id="viewNav">
+  <button class="nav-tab active" id="navOverall" onclick="setView('overall')">Overall</button>
+  <div id="navCompTabs" style="display:contents"></div>
+  <button id="adminGateBtn" onclick="openAdminGate()">⚙ Admin</button>
+  <span id="adminBadge" style="display:none">👑 Admin</span>
+</nav>
+
+<div id="mainContent">
+  <div id="publicView">
+    <div class="lb-header">
+      <div>
+        <div class="lb-title" id="lbTitle">Overall Standings</div>
+        <div class="lb-desc" id="lbDesc"></div>
+      </div>
+      <button class="btn-share" onclick="openShareModal()">📸 Share Results</button>
+    </div>
+    <div class="lb-grid" id="leaderboard"><div class="lb-empty">No players yet.</div></div>
+  </div>
+
+  <div id="adminPanel">
+    <div class="admin-grid">
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Players</span></div>
+        <div class="card-body">
+          <div class="fg row2">
+            <div><label>Name</label>
+              <input type="text" id="newPlayerName" placeholder="Add player…" maxlength="25"
+                onkeydown="if(event.key==='Enter')addPlayer()"></div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-gold" style="width:100%" onclick="addPlayer()">Add</button></div>
+          </div>
+          <div class="divider">Roster</div>
+          <div class="chip-list" id="playerList">
+            <p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1rem;font-size:.85rem">No players yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Competitions</span></div>
+        <div class="card-body">
+          <div class="fg"><label>Name</label>
+            <input type="text" id="newCompName" placeholder="e.g. Week 1: Bondage Bingo" maxlength="40"></div>
+          <div class="fg"><label>Description <span style="font-size:.65rem;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <input type="text" id="newCompDesc" placeholder="Short description…" maxlength="80"></div>
+          <button class="btn btn-gold btn-full" onclick="addComp()">Add Competition</button>
+          <div class="divider">Competitions</div>
+          <div class="chip-list" id="compList">
+            <p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1rem;font-size:.85rem">No competitions yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Award / Adjust Points</span></div>
+        <div class="card-body">
+          <div class="fg"><label>Competition</label>
+            <select id="ptComp"><option value="overall">Overall (no specific comp)</option></select></div>
+          <div class="fg row2">
+            <div><label>Player</label><select id="ptPlayer"><option value="">— Select —</option></select></div>
+            <div><label>Points (±)</label><input type="number" id="ptAmount" placeholder="e.g. 10 or -5"></div>
+          </div>
+          <div class="fg"><label>Reason <span style="font-size:.65rem;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <textarea id="ptComment" placeholder="What were these points for?"></textarea></div>
+          <button class="btn btn-gold btn-full" onclick="awardPoints()">Award Points</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title">Transfer Points</span></div>
+        <div class="card-body">
+          <div class="fg"><label>Competition</label>
+            <select id="trComp"><option value="overall">Overall</option></select></div>
+          <div class="fg row2">
+            <div><label>From</label><select id="trFrom"><option value="">— Select —</option></select></div>
+            <div><label>To</label><select id="trTo"><option value="">— Select —</option></select></div>
+          </div>
+          <div class="fg"><label>Points</label>
+            <input type="number" id="trAmount" placeholder="Positive amount" min="1"></div>
+          <div class="fg"><label>Reason <span style="font-size:.65rem;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <textarea id="trComment" placeholder="Why?"></textarea></div>
+          <button class="btn btn-teal btn-full" onclick="transferPoints()">Transfer</button>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-head">
+          <span class="card-title">Activity Log</span>
+          <button class="btn btn-danger" id="clearLogBtn">Clear Log</button>
+        </div>
+        <div class="card-body">
+          <div class="log-scroll" id="logList">
+            <p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1.5rem;font-size:.85rem">No activity yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-head"><span class="card-title">Settings</span></div>
+        <div class="card-body">
+          <div class="row3">
+            <div class="fg"><label>Leaderboard Title</label><input type="text" id="setTitle" value="The Leaderboard"></div>
+            <div class="fg"><label>Subtitle</label><input type="text" id="setSubtitle" value="Monthly Games Tracker"></div>
+            <div class="fg"><label>Header Icon (emoji)</label><input type="text" id="setIcon" value="⚔️" maxlength="4"></div>
+          </div>
+          <div class="row2">
+            <div class="fg"><label>Change Admin Password</label>
+              <input type="password" id="setPass" placeholder="Leave blank to keep current"></div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-gold" style="width:100%" onclick="saveSettings()">Save Settings</button></div>
+          </div>
+          <div class="divider">Danger Zone</div>
+          <div class="btn-row">
+            <button class="btn btn-danger" id="resetPtsBtn">Reset All Points</button>
+            <button class="btn btn-danger" id="nukeBtn">Delete Everything</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('adminModal')">✕</button>
+    <h3>⚔ Admin Access</h3>
+    <div class="fg"><label>Password</label>
+      <input type="password" id="adminPassInput" placeholder="Enter admin password"
+        onkeydown="if(event.key==='Enter')verifyAdmin()"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="verifyAdmin()">Unlock</button>
+      <button class="btn btn-ghost" onclick="closeModal('adminModal')">Cancel</button>
+    </div>
+    <p style="margin-top:.85rem;font-size:.82rem;color:var(--text-dim);font-style:italic">
+      Default password: <strong style="color:var(--gold)">admin123</strong></p>
+  </div>
+</div>
+
+<div class="modal-bg" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg" style="color:var(--text-dim);margin-bottom:1.25rem;font-size:.9rem;line-height:1.5"></p>
+    <div class="btn-row">
+      <button class="btn btn-danger" id="confirmYesBtn">Yes, do it</button>
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="shareModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+    <h3>📸 Share Results</h3>
+    <div class="fg"><label>Which leaderboard?</label>
+      <select id="shareTarget" onchange="onShareTargetChange()"></select></div>
+
+    <div class="share-tabs">
+      <button class="share-tab active" data-tab="image" onclick="switchShareTab('image')">🖼 Image</button>
+      <button class="share-tab" data-tab="discord" onclick="switchShareTab('discord')">💬 Discord Text</button>
+    </div>
+
+    <!-- IMAGE TAB -->
+    <div class="share-tab-pane active" id="sharePaneImage">
+      <button class="btn btn-gold btn-full" id="genSnapshotBtn" onclick="generateSnapshot()">Generate Image</button>
+      <div id="snapshotResult" style="display:none;margin-top:1rem">
+        <img id="snapshotImg" style="width:100%;border-radius:6px;border:1px solid var(--border-gold);display:block" alt="Snapshot">
+        <div id="saveButtonsContainer"></div>
+      </div>
+    </div>
+
+    <!-- DISCORD TAB -->
+    <div class="share-tab-pane" id="sharePaneDiscord">
+      <div class="fg row2">
+        <div>
+          <label>Style</label>
+          <select id="discordStyle" onchange="generateDiscordText()">
+            <option value="ansi">Coloured (ANSI block)</option>
+            <option value="bars">Visual bars</option>
+            <option value="medals">Compact medals</option>
+            <option value="table">Table</option>
+          </select>
+        </div>
+        <div>
+          <label>Header note <span style="font-size:.65rem;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input type="text" id="discordNote" placeholder="e.g. Day 12 update!" maxlength="80" oninput="generateDiscordText()">
+        </div>
+      </div>
+      <label>Preview <span style="font-size:.65rem;text-transform:none;letter-spacing:0">(this is what it'll look like in Discord)</span></label>
+      <div class="discord-preview" id="discordPreview"></div>
+      <label style="margin-top:.6rem">Copy this text</label>
+      <textarea id="discordText" readonly style="font-family:'Courier New',monospace;font-size:.78rem;min-height:120px;line-height:1.4"></textarea>
+      <button class="btn btn-gold btn-full" onclick="copyDiscordText()" id="copyBtn">📋 Copy to Clipboard</button>
+      <p style="margin-top:.6rem;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;line-height:1.5">
+        Paste directly into your Discord channel. Coloured blocks render in light & dark mode on desktop and mobile.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="setupModal">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('setupModal')">✕</button>
+    <h3>🔧 Firebase Setup</h3>
+    <div style="font-size:.88rem;color:var(--text);line-height:1.75">
+      <p style="margin-bottom:.75rem">To sync this leaderboard <strong style="color:var(--gold)">live across all devices</strong>:</p>
+      <ol style="padding-left:1.25rem;color:var(--text-dim)">
+        <li style="margin-bottom:.5rem">Go to <strong style="color:var(--gold-bright)">console.firebase.google.com</strong> → Create project</li>
+        <li style="margin-bottom:.5rem">Add a <strong>Web app</strong> → copy the config object</li>
+        <li style="margin-bottom:.5rem">Go to <strong>Build → Realtime Database</strong> → Create database → <em>Test mode</em></li>
+        <li style="margin-bottom:.5rem">Open this HTML file in a text editor, find the <code style="color:var(--teal-bright);background:var(--surface3);padding:.1rem .35rem;border-radius:3px">FIREBASE_CONFIG</code> block near the top, and replace each <code style="color:var(--teal-bright)">PASTE_…</code> value with yours</li>
+        <li>Save and share the file — it syncs live!</li>
+      </ol>
+      <p style="margin-top:.85rem;color:var(--text-dim);font-style:italic">Everyone uses the same HTML file. Admins log in with the password; everyone else opens it to view the live leaderboard.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════
+//  🔧 PASTE YOUR FIREBASE CONFIG HERE
+// ══════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "PASTE_API_KEY",
+  authDomain:        "PASTE_AUTH_DOMAIN",
+  databaseURL:       "PASTE_DATABASE_URL",
+  projectId:         "PASTE_PROJECT_ID",
+  storageBucket:     "PASTE_STORAGE_BUCKET",
+  messagingSenderId: "PASTE_MESSAGING_SENDER_ID",
+  appId:             "PASTE_APP_ID"
+};
+// ══════════════════════════════════════════
+
+// ─── STATE ───────────────────────────────
+let S = {
+  players:  {},  // { id: { name, overallPts } }
+  comps:    {},  // { id: { name, desc, order } }
+  compPts:  {},  // { compId: { playerId: pts } }
+  log:      {},  // { pushId: { ts, type, ... } }
+  settings: { title:'The Leaderboard', subtitle:'Monthly Games Tracker', icon:'⚔️', adminPass:'admin123' }
+};
+let isAdmin = false, currentView = 'overall', db = null, fbReady = false;
+
+// ─── FIREBASE INIT ────────────────────────
+(function() {
+  const configured = !FIREBASE_CONFIG.apiKey.includes('PASTE');
+  if (!configured) {
+    document.getElementById('setupBanner').style.display = 'block';
+    loadLocal(); renderAll(); return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    fbReady = true;
+    db.ref('/').on('value', snap => {
+      const d = snap.val() || {};
+      S.players = d.players || {};
+      S.comps   = d.comps   || {};
+      S.compPts = d.compPts || {};
+      S.log     = d.log     || {};
+      if (d.settings) Object.assign(S.settings, d.settings);
+      renderAll();
+    }, err => toast('DB error: ' + err.message, true));
+  } catch(e) {
+    document.getElementById('setupBanner').style.display = 'block';
+    document.getElementById('setupBanner').innerHTML =
+      '⚠ Firebase error: ' + e.message + ' — running locally. <a onclick="document.getElementById(\'setupModal\').classList.add(\'open\')">Setup help</a>';
+    loadLocal(); renderAll();
+  }
+})();
+
+// ─── LOCAL STORAGE FALLBACK ───────────────
+function saveLocal() { try { localStorage.setItem('lb3', JSON.stringify(S)); } catch(e){} }
+function loadLocal() {
+  try { const d = localStorage.getItem('lb3'); if (d) Object.assign(S, JSON.parse(d)); } catch(e){}
+}
+
+// ─── DB WRAPPERS ──────────────────────────
+// These always use Firebase if ready; otherwise mutate local state + save
+function navPath(path) {
+  // Returns {parent obj, key} for a slash-separated path in S
+  const parts = path.replace(/^\//, '').split('/').filter(Boolean);
+  let obj = S;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (typeof obj[parts[i]] !== 'object' || !obj[parts[i]]) obj[parts[i]] = {};
+    obj = obj[parts[i]];
+  }
+  return { obj, key: parts[parts.length - 1] };
+}
+
+function dbSet(path, val) {
+  if (fbReady) { db.ref(path).set(val).catch(e => toast('Save error',true)); return; }
+  const { obj, key } = navPath(path);
+  if (key) obj[key] = val; else Object.assign(S, val);
+  saveLocal(); renderAll();
+}
+
+function dbMerge(path, val) {
+  // Like update() — merges into existing object at path
+  if (fbReady) { db.ref(path).update(val).catch(e => toast('Save error',true)); return; }
+  const { obj, key } = navPath(path);
+  if (key) { if (typeof obj[key] !== 'object' || !obj[key]) obj[key] = {}; Object.assign(obj[key], val); }
+  saveLocal(); renderAll();
+}
+
+function dbRemove(path) {
+  if (fbReady) { db.ref(path).remove().catch(e => toast('Remove error',true)); return; }
+  const { obj, key } = navPath(path);
+  if (key) delete obj[key];
+  saveLocal(); renderAll();
+}
+
+function dbPush(path, val) {
+  if (fbReady) { db.ref(path).push(val).catch(e => {}); return; }
+  const id = 'l' + Date.now() + Math.random().toString(36).slice(2,5);
+  const { obj, key } = navPath(path);
+  if (key) { if (!obj[key]) obj[key] = {}; obj[key][id] = val; }
+  saveLocal(); renderAll();
+}
+
+// ─── RENDER ───────────────────────────────
+function renderAll() {
+  applySettings(); renderNav(); renderLeaderboard();
+  if (isAdmin) { renderPlayerList(); renderCompList(); rebuildSelects(); renderLog(); }
+}
+
+function applySettings() {
+  const s = S.settings;
+  document.getElementById('mainTitle').textContent    = s.title    || 'The Leaderboard';
+  document.getElementById('mainSubtitle').textContent = s.subtitle || 'Monthly Games Tracker';
+  document.getElementById('headerIcon').textContent   = s.icon     || '⚔️';
+  document.title = s.title || 'The Leaderboard';
+  if (isAdmin) {
+    document.getElementById('setTitle').value    = s.title    || '';
+    document.getElementById('setSubtitle').value = s.subtitle || '';
+    document.getElementById('setIcon').value     = s.icon     || '⚔️';
+  }
+}
+
+function renderNav() {
+  const comps = sortedComps();
+  document.getElementById('navCompTabs').innerHTML = comps.map(c =>
+    `<button class="nav-tab${currentView===c.id?' active':''}" onclick="setView('${c.id}')">${esc(c.name)}</button>`
+  ).join('');
+  document.getElementById('navOverall').className = 'nav-tab' + (currentView==='overall'?' active':'');
+}
+
+function renderLeaderboard() {
+  const lb    = document.getElementById('leaderboard');
+  const titEl = document.getElementById('lbTitle');
+  const dscEl = document.getElementById('lbDesc');
+  const players = Object.entries(S.players).map(([id,p]) => ({id,...p}));
+  if (!players.length) { lb.innerHTML='<div class="lb-empty">No players yet.</div>'; return; }
+
+  let scored;
+  if (currentView === 'overall') {
+    titEl.textContent = 'Overall Standings'; dscEl.textContent = '';
+    scored = players.map(p => ({...p, pts: overallPts(p.id)}));
+  } else {
+    const c = S.comps[currentView];
+    if (!c) { setView('overall'); return; }
+    titEl.textContent = c.name; dscEl.textContent = c.desc || '';
+    const cp = S.compPts[currentView] || {};
+    scored = players.map(p => ({...p, pts: cp[p.id] || 0}));
+  }
+  scored.sort((a,b) => b.pts - a.pts);
+  const mx = Math.max(...scored.map(x=>x.pts), 1);
+  const syms = ['👑','✦','✧'];
+  lb.innerHTML = scored.map((p,i) => {
+    const rc = i<3 ? 'r'+(i+1) : 'rn';
+    const bc = ['bar-1','bar-2','bar-3','bar-n'][Math.min(i,3)];
+    return `<div class="lb-row${i<3?' r'+(i+1):''}">
+      <span class="lb-rank ${rc}">${i<3?syms[i]:i+1}</span>
+      <span class="lb-name">${esc(p.name)}</span>
+      <div class="lb-bar-wrap"><div class="lb-bar ${bc}" style="width:${Math.max(3,(p.pts/mx)*100)}%"></div></div>
+      <span class="lb-pts">${p.pts} <span class="unit">pts</span></span>
+    </div>`;
+  }).join('');
+}
+
+function renderPlayerList() {
+  const pl = document.getElementById('playerList');
+  const ps = Object.entries(S.players).map(([id,p])=>({id,...p}));
+  if (!ps.length) { pl.innerHTML='<p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1rem;font-size:.85rem">No players yet.</p>'; return; }
+  pl.innerHTML = ps.map(p=>`<div class="chip">
+    <span class="chip-name">${esc(p.name)}</span>
+    <span class="chip-pts">${overallPts(p.id)} pts</span>
+    <button class="btn btn-danger" data-pid="${p.id}">✕</button>
+  </div>`).join('');
+  pl.querySelectorAll('[data-pid]').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.pid, name = S.players[id]?.name||'?';
+    openConfirm(`Remove ${name}?`, `Removes ${name} and all their points.`, () => removePlayer(id));
+  }));
+}
+
+function renderCompList() {
+  const cl = document.getElementById('compList');
+  const cs = sortedComps();
+  if (!cs.length) { cl.innerHTML='<p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1rem;font-size:.85rem">No competitions yet.</p>'; return; }
+  cl.innerHTML = cs.map(c=>`<div class="chip">
+    <div style="flex:1;overflow:hidden"><div class="chip-name">${esc(c.name)}</div>
+      ${c.desc?`<div class="chip-sub">${esc(c.desc)}</div>`:''}</div>
+    <button class="btn btn-danger" data-cid="${c.id}">✕</button>
+  </div>`).join('');
+  cl.querySelectorAll('[data-cid]').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.cid, name = S.comps[id]?.name||'?';
+    openConfirm(`Remove "${name}"?`, 'All points for this competition will be deleted.', () => removeComp(id));
+  }));
+}
+
+function rebuildSelects() {
+  const cs = sortedComps();
+  const cOpts = '<option value="overall">Overall (no specific comp)</option>' +
+    cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('ptComp').innerHTML = cOpts;
+  document.getElementById('trComp').innerHTML = cOpts.replace('no specific comp','');
+  const ps = Object.entries(S.players).map(([id,p])=>({id,...p}));
+  const pOpts = '<option value="">— Select —</option>' +
+    ps.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  ['ptPlayer','trFrom','trTo'].forEach(id => document.getElementById(id).innerHTML = pOpts);
+}
+
+function renderLog() {
+  const ll = document.getElementById('logList');
+  const entries = Object.values(S.log).sort((a,b)=>b.ts-a.ts).slice(0,150);
+  if (!entries.length) { ll.innerHTML='<p style="color:var(--text-dim);font-style:italic;text-align:center;padding:1.5rem;font-size:.85rem">No activity yet.</p>'; return; }
+  ll.innerHTML = entries.map(e => {
+    const t = new Date(e.ts).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    let d = '';
+    if (e.type==='pts') {
+      const sign = e.pts>=0?'+':''; const cls = e.pts>=0?'lp-pos':'lp-neg';
+      const scope = e.comp==='overall'?'overall':esc(S.comps[e.comp]?.name||e.comp);
+      d = `<span class="${cls}">${sign}${e.pts} pts</span> → <strong style="color:var(--text-bright)">${esc(e.pName)}</strong> <span style="color:var(--text-dim)">(${scope})</span>`;
+    } else if (e.type==='transfer') {
+      const scope = e.comp==='overall'?'overall':esc(S.comps[e.comp]?.name||e.comp);
+      d = `<span class="lp-tr">${e.pts} pts</span> transferred: <strong style="color:var(--text-bright)">${esc(e.from)}</strong> → <strong style="color:var(--text-bright)">${esc(e.to)}</strong> <span style="color:var(--text-dim)">(${scope})</span>`;
+    } else {
+      d = `<span style="color:var(--text-dim)">${esc(e.note||'')}</span>`;
+    }
+    return `<div class="log-item"><div class="log-meta"><span class="log-time">${t}</span> · ${d}</div>
+      ${e.comment?`<div class="log-comment">↳ ${esc(e.comment)}</div>`:''}</div>`;
+  }).join('');
+}
+
+// ─── HELPERS ──────────────────────────────
+function sortedComps() {
+  return Object.entries(S.comps).map(([id,c])=>({id,...c})).sort((a,b)=>(a.order||0)-(b.order||0));
+}
+function overallPts(pid) {
+  let t = S.players[pid]?.overallPts || 0;
+  for (const cid of Object.keys(S.compPts)) t += (S.compPts[cid]?.[pid] || 0);
+  return t;
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function log(entry) { dbPush('/log', { ts:Date.now(), ...entry }); }
+
+// ─── ACTIONS ──────────────────────────────
+function addPlayer() {
+  const name = document.getElementById('newPlayerName').value.trim();
+  if (!name) return toast('Enter a name', true);
+  if (Object.values(S.players).some(p=>p.name.toLowerCase()===name.toLowerCase())) return toast('Already exists', true);
+  const id = uid();
+  dbSet('/players/'+id, { name, overallPts:0 });
+  log({ type:'admin', note:`Player "${name}" added` });
+  document.getElementById('newPlayerName').value = '';
+  toast(name + ' added');
+}
+
+function removePlayer(id) {
+  const name = S.players[id]?.name || '?';
+  dbRemove('/players/'+id);
+  for (const cid of Object.keys(S.compPts)) {
+    if (S.compPts[cid]?.[id] !== undefined) dbRemove(`/compPts/${cid}/${id}`);
+  }
+  log({ type:'admin', note:`Player "${name}" removed` });
+  toast(name + ' removed');
+}
+
+function addComp() {
+  const name = document.getElementById('newCompName').value.trim();
+  if (!name) return toast('Enter a competition name', true);
+  const desc = document.getElementById('newCompDesc').value.trim();
+  const id = uid();
+  dbSet('/comps/'+id, { name, desc, order: sortedComps().length });
+  log({ type:'admin', note:`Competition "${name}" created` });
+  document.getElementById('newCompName').value = '';
+  document.getElementById('newCompDesc').value = '';
+  toast('Competition added');
+}
+
+function removeComp(id) {
+  const name = S.comps[id]?.name || '?';
+  dbRemove('/comps/'+id); dbRemove('/compPts/'+id);
+  log({ type:'admin', note:`Competition "${name}" removed` });
+  if (currentView===id) setView('overall');
+  toast('Competition removed');
+}
+
+function awardPoints() {
+  const pid  = document.getElementById('ptPlayer').value;
+  const comp = document.getElementById('ptComp').value;
+  const pts  = parseInt(document.getElementById('ptAmount').value, 10);
+  const cmt  = document.getElementById('ptComment').value.trim();
+  if (!pid) return toast('Select a player', true);
+  if (isNaN(pts)||pts===0) return toast('Enter a non-zero value', true);
+  const pName = S.players[pid]?.name || pid;
+  if (comp==='overall') {
+    const cur = S.players[pid]?.overallPts || 0;
+    // IMPORTANT: use merge (update) so we don't overwrite the player's name
+    dbMerge('/players/'+pid, { overallPts: cur+pts });
+  } else {
+    dbSet(`/compPts/${comp}/${pid}`, (S.compPts[comp]?.[pid]||0) + pts);
+  }
+  log({ type:'pts', pts, pName, comp, comment:cmt||null });
+  document.getElementById('ptAmount').value  = '';
+  document.getElementById('ptComment').value = '';
+  toast(`${pts>=0?'+':''}${pts} pts → ${pName}`);
+}
+
+function transferPoints() {
+  const fid  = document.getElementById('trFrom').value;
+  const tid  = document.getElementById('trTo').value;
+  const comp = document.getElementById('trComp').value;
+  const pts  = parseInt(document.getElementById('trAmount').value, 10);
+  const cmt  = document.getElementById('trComment').value.trim();
+  if (!fid||!tid) return toast('Select both players', true);
+  if (fid===tid) return toast('Cannot transfer to same player', true);
+  if (isNaN(pts)||pts<=0) return toast('Enter a positive amount', true);
+  const fn = S.players[fid]?.name||'?', tn = S.players[tid]?.name||'?';
+  if (comp==='overall') {
+    const fp = S.players[fid]?.overallPts||0, tp = S.players[tid]?.overallPts||0;
+    if (fp<pts) return toast(`${fn} only has ${fp} pts`, true);
+    dbMerge('/players/'+fid, { overallPts: fp-pts });
+    dbMerge('/players/'+tid, { overallPts: tp+pts });
+  } else {
+    const fp = S.compPts[comp]?.[fid]||0, tp = S.compPts[comp]?.[tid]||0;
+    if (fp<pts) return toast(`${fn} only has ${fp} pts`, true);
+    dbSet(`/compPts/${comp}/${fid}`, fp-pts);
+    dbSet(`/compPts/${comp}/${tid}`, tp+pts);
+  }
+  log({ type:'transfer', pts, from:fn, to:tn, comp, comment:cmt||null });
+  document.getElementById('trAmount').value  = '';
+  document.getElementById('trComment').value = '';
+  toast(`${pts} pts: ${fn} → ${tn}`);
+}
+
+function saveSettings() {
+  const upd = {
+    title:    document.getElementById('setTitle').value.trim()    || 'The Leaderboard',
+    subtitle: document.getElementById('setSubtitle').value.trim() || 'Monthly Games Tracker',
+    icon:     document.getElementById('setIcon').value.trim()     || '⚔️'
+  };
+  const np = document.getElementById('setPass').value;
+  if (np) { upd.adminPass = np; document.getElementById('setPass').value=''; }
+  dbMerge('/settings', upd);
+  toast('Settings saved');
+}
+
+function resetAllPoints() {
+  for (const id of Object.keys(S.players)) dbMerge('/players/'+id, { overallPts:0 });
+  dbSet('/compPts', {});
+  log({ type:'admin', note:'All points reset to 0' });
+  toast('All points reset');
+}
+
+function nukeAll() {
+  const kept = { ...S.settings };
+  dbSet('/', { settings: kept });
+  toast('Everything cleared');
+}
+
+function clearLog() { dbRemove('/log'); toast('Log cleared'); }
+
+// ─── VIEW ─────────────────────────────────
+function setView(v) { currentView=v; renderNav(); renderLeaderboard(); }
+
+// ─── ADMIN GATE ───────────────────────────
+function openAdminGate() {
+  document.getElementById('adminPassInput').value='';
+  document.getElementById('adminModal').classList.add('open');
+  setTimeout(()=>document.getElementById('adminPassInput').focus(), 120);
+}
+function verifyAdmin() {
+  const pass = document.getElementById('adminPassInput').value;
+  if (pass===(S.settings.adminPass||'admin123')) {
+    isAdmin=true; closeModal('adminModal');
+    document.getElementById('adminGateBtn').style.display='none';
+    document.getElementById('adminBadge').style.display='inline';
+    document.getElementById('adminPanel').style.display='block';
+    renderAll(); toast('Admin access granted ⚔');
+  } else toast('Incorrect password', true);
+}
+
+// ─── SHARE / SNAPSHOT ────────────────────
+function openShareModal() {
+  const sel = document.getElementById('shareTarget');
+  sel.innerHTML = '<option value="overall">Overall Standings</option>' +
+    sortedComps().map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('snapshotResult').style.display='none';
+  // Reset to Image tab on each open
+  switchShareTab('image');
+  document.getElementById('shareModal').classList.add('open');
+}
+
+let _lastSnapshot = null; // { blob, dataURL, fname }
+
+function generateSnapshot() {
+  const target = document.getElementById('shareTarget').value;
+  const genBtn = document.getElementById('genSnapshotBtn');
+  const s      = S.settings;
+  const players = Object.entries(S.players).map(([id,p])=>({id,...p}));
+  if (!players.length) return toast('No players to snapshot', true);
+
+  genBtn.innerHTML = '<span class="spinner"></span> Generating…';
+  genBtn.disabled  = true;
+
+  // Build scored list
+  let scored, title1, title2;
+  if (target === 'overall') {
+    title1 = s.title || 'The Leaderboard';
+    title2 = 'Overall Standings';
+    scored = players.map(p => ({...p, pts: overallPts(p.id)}));
+  } else {
+    const comp = S.comps[target];
+    title1 = s.title || 'The Leaderboard';
+    title2 = comp?.name || '';
+    const cp = S.compPts[target] || {};
+    scored = players.map(p => ({...p, pts: cp[p.id] || 0}));
+  }
+  scored.sort((a,b) => b.pts - a.pts);
+
+  // ── Draw on Canvas ────────────────────────────
+  const W      = 680;
+  const ROW_H  = 60;
+  const PAD    = 40;
+  const HEADER = 120;
+  const FOOTER = 54;
+  const GAP    = 8;
+  const H      = HEADER + scored.length * (ROW_H + GAP) + FOOTER;
+  const DPR    = 2;
+
+  const canvas  = document.createElement('canvas');
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // Background — match the app's brighter scheme
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#222a4f');
+  bgGrad.addColorStop(1, '#1a1f3a');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Warm corner glows
+  const glow1 = ctx.createRadialGradient(W*0.15, H*0.1, 0, W*0.15, H*0.1, W*0.7);
+  glow1.addColorStop(0, 'rgba(255,200,87,0.15)');
+  glow1.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow1; ctx.fillRect(0, 0, W, H);
+
+  const glow2 = ctx.createRadialGradient(W*0.85, H*0.95, 0, W*0.85, H*0.95, W*0.5);
+  glow2.addColorStop(0, 'rgba(58,202,176,0.10)');
+  glow2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+
+  // Top decorative line
+  drawGradLine(ctx, W*0.2, 28, W*0.8, 28, '#9a7020', 0.9);
+
+  // Title with glow
+  ctx.textAlign   = 'center';
+  ctx.fillStyle   = '#ffd97a';
+  ctx.font        = 'bold 28px Georgia, "Times New Roman", serif';
+  ctx.shadowColor = 'rgba(255,217,122,0.55)';
+  ctx.shadowBlur  = 22;
+  ctx.fillText(title1, W/2, 66);
+  ctx.shadowBlur  = 0;
+
+  // Subtitle
+  ctx.fillStyle = '#b0a890';
+  ctx.font      = '13px Arial, Helvetica, sans-serif';
+  ctx.fillText(title2.toUpperCase(), W/2, 88);
+
+  // Divider
+  drawGradLine(ctx, PAD, 102, W-PAD, 102, '#3a4570', 1);
+
+  // Rows
+  const maxPts     = Math.max(...scored.map(x=>x.pts), 1);
+  const accentCols = ['#ffd97a','#d8e0f0','#ff9550','#5a6595'];
+  const barStart   = ['#a07020','#5a6580','#a05020','#3a4570'];
+  const barEnd     = ['#ffd97a','#e0e8f5','#ff9550','#7a85b0'];
+  const rankCols   = ['#ffd97a','#e0e8f5','#ff9550'];
+
+  let y = HEADER;
+  scored.forEach((p, i) => {
+    const rx = PAD, ry = y, rw = W - PAD*2, rh = ROW_H;
+
+    // Row bg — alternating tint, brighter than before
+    ctx.fillStyle = i % 2 === 0 ? '#2a3151' : '#323a5f';
+    roundRect(ctx, rx, ry, rw, rh, 7); ctx.fill();
+
+    // Subtle row top highlight
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, rx+0.5, ry+0.5, rw-1, rh-1, 7); ctx.stroke();
+
+    // Accent stripe
+    ctx.fillStyle = accentCols[Math.min(i,3)];
+    roundRect(ctx, rx, ry, 4, rh, 3); ctx.fill();
+
+    // Rank
+    ctx.textAlign = 'center';
+    if (i === 0) {
+      ctx.font = '24px serif';
+      ctx.fillText('👑', rx+24, ry+rh/2+9);
+    } else if (i < 3) {
+      ctx.fillStyle = rankCols[i];
+      ctx.font = 'bold 17px Georgia, serif';
+      ctx.fillText(i===1?'✦':'✧', rx+24, ry+rh/2+6);
+    } else {
+      ctx.fillStyle = '#9a9080';
+      ctx.font = 'bold 14px Arial, sans-serif';
+      ctx.fillText(String(i+1), rx+24, ry+rh/2+5);
+    }
+
+    // Name
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font      = '17px Georgia, "Times New Roman", serif';
+    let name = p.name;
+    while (ctx.measureText(name).width > 195 && name.length > 2) name = name.slice(0,-1);
+    if (name !== p.name) name += '…';
+    ctx.fillText(name, rx+50, ry+rh/2+6);
+
+    // Bar background
+    const bx = rx+255, by = ry+rh/2-5, bw = 210, bh = 10;
+    ctx.fillStyle = '#1e2548';
+    roundRect(ctx, bx, by, bw, bh, 5); ctx.fill();
+
+    // Bar fill
+    const fw = Math.max(8, (p.pts/maxPts)*bw);
+    const bg = ctx.createLinearGradient(bx, 0, bx+fw, 0);
+    bg.addColorStop(0, barStart[Math.min(i,3)]);
+    bg.addColorStop(1, barEnd[Math.min(i,3)]);
+    ctx.fillStyle = bg;
+    roundRect(ctx, bx, by, fw, bh, 5); ctx.fill();
+
+    // Bar shine
+    const shine = ctx.createLinearGradient(bx, by, bx, by+bh);
+    shine.addColorStop(0, 'rgba(255,255,255,0.15)');
+    shine.addColorStop(0.5, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shine;
+    roundRect(ctx, bx, by, fw, bh, 5); ctx.fill();
+
+    // Points
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffc857';
+    ctx.font      = 'bold 15px Arial, Helvetica, sans-serif';
+    ctx.fillText(`${p.pts} pts`, rx+rw-12, ry+rh/2+6);
+
+    y += rh + GAP;
+  });
+
+  // Footer
+  const dateStr = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#7a7060';
+  ctx.font      = '11px Arial, sans-serif';
+  ctx.fillText(`GENERATED ${dateStr.toUpperCase()}`, W/2, y+26);
+  drawGradLine(ctx, W*0.3, y+14, W*0.7, y+14, '#7a5a20', 0.5);
+
+  // ── Output: dataURL for preview + blob for sharing ─────────
+  const dataURL = canvas.toDataURL('image/png');
+  const fname   = (title2||'leaderboard').replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.png';
+
+  // Preview
+  document.getElementById('snapshotImg').src = dataURL;
+  document.getElementById('snapshotResult').style.display = 'block';
+
+  // Convert to blob for sharing (works in parallel)
+  canvas.toBlob(blob => {
+    _lastSnapshot = { blob, dataURL, fname };
+    setupSaveButtons();
+  }, 'image/png');
+
+  genBtn.innerHTML = 'Regenerate Image';
+  genBtn.disabled  = false;
+}
+
+function setupSaveButtons() {
+  if (!_lastSnapshot) return;
+  const { blob, dataURL, fname } = _lastSnapshot;
+
+  const container = document.getElementById('saveButtonsContainer');
+  container.innerHTML = '';
+
+  // Primary: Open in new tab — most reliable across all environments including
+  // sandboxed WebViews (Claude app, Discord embed, etc.). User can then long-press
+  // the image in their actual browser to save it.
+  const openBtn = document.createElement('button');
+  openBtn.className = 'btn btn-teal btn-full';
+  openBtn.style.marginTop = '0.65rem';
+  openBtn.innerHTML = '🔗 Open Image in Browser';
+  openBtn.addEventListener('click', () => {
+    openImageInTab(blob, dataURL, fname);
+  });
+  container.appendChild(openBtn);
+
+  // Secondary: Native share if available (mobile only, modern browsers)
+  const canShare = !!(navigator.share && blob && navigator.canShare && (() => {
+    try { return navigator.canShare({ files: [new File([blob], fname, { type:'image/png' })] }); }
+    catch(e) { return false; }
+  })());
+
+  if (canShare) {
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'btn btn-gold btn-full';
+    shareBtn.style.marginTop = '0.5rem';
+    shareBtn.innerHTML = '📤 Share';
+    shareBtn.addEventListener('click', async () => {
+      try {
+        const file = new File([blob], fname, { type: 'image/png' });
+        await navigator.share({ files: [file], title: 'Leaderboard' });
+      } catch(e) {
+        if (e.name !== 'AbortError') openImageInTab(blob, dataURL, fname);
+      }
+    });
+    container.appendChild(shareBtn);
+  }
+
+  // Tertiary: Direct download (works on desktop)
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'btn btn-ghost btn-full';
+  dlBtn.style.marginTop = '0.5rem';
+  dlBtn.innerHTML = '⬇ Direct Download';
+  dlBtn.addEventListener('click', () => fallbackDownload(blob, dataURL, fname));
+  container.appendChild(dlBtn);
+
+  const hint = document.createElement('p');
+  hint.style.cssText = 'margin-top:.6rem;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;line-height:1.5';
+  hint.innerHTML = 'On mobile: tap <strong style="color:var(--gold)">Open Image in Browser</strong>, then long-press the image to save it to your photos.';
+  container.appendChild(hint);
+}
+
+function openImageInTab(blob, dataURL, fname) {
+  const title = fname.replace('.png','').replace(/_/g,' ');
+  // Build a minimal HTML page that displays the image fullscreen
+  // This page opens in a real browser tab, where long-press / right-click work normally
+  const html = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>${title}</title>
+<style>
+body{margin:0;background:#1a1f3a;color:#e8e3d0;font-family:Georgia,serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem;}
+img{max-width:100%;height:auto;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,0.5);}
+.tip{margin-top:1.25rem;font-size:0.95rem;color:#ffd97a;text-align:center;max-width:500px;line-height:1.5;}
+.tip2{margin-top:0.5rem;font-size:0.82rem;color:#9a9080;text-align:center;font-style:italic;}
+a.dl{display:inline-block;margin-top:1rem;padding:0.6rem 1.5rem;background:#ffc857;color:#1a1f3a;
+  text-decoration:none;border-radius:6px;font-weight:bold;letter-spacing:0.05em;}
+</style>
+</head><body>
+<img src="${dataURL}" alt="${title}">
+<p class="tip">📱 <strong>Long-press the image above</strong> and tap <strong>"Save image"</strong> or <strong>"Download"</strong></p>
+<p class="tip2">Or use the button below:</p>
+<a class="dl" href="${dataURL}" download="${fname}">⬇ Download ${fname}</a>
+</body></html>`;
+
+  // Method 1: blob URL approach (best on mobile — opens fully out of sandbox)
+  if (blob) {
+    try {
+      const htmlBlob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(htmlBlob);
+      const win = window.open(url, '_blank');
+      if (win) {
+        toast('Opened in new tab — long-press image to save');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        return;
+      }
+    } catch(e) { console.warn('blob open failed', e); }
+  }
+
+  // Method 2: data URL HTML (works in most environments)
+  try {
+    const dataHtmlUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    const win = window.open(dataHtmlUrl, '_blank');
+    if (win) {
+      toast('Opened in new tab — long-press image to save');
+      return;
+    }
+  } catch(e) { console.warn('data URL open failed', e); }
+
+  // Method 3: open just the image directly
+  try {
+    const win = window.open(dataURL, '_blank');
+    if (win) {
+      toast('Opened — long-press to save');
+      return;
+    }
+  } catch(e) { console.warn('image open failed', e); }
+
+  // Method 4: pop-up blocked — replace current page (last resort)
+  if (confirm('Pop-up blocked. Open image in this tab? (You can press back to return)')) {
+    document.body.innerHTML = html;
+  }
+}
+
+function fallbackDownload(blob, dataURL, fname) {
+  if (blob) {
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast('Downloaded');
+      return;
+    } catch(e) { console.warn(e); }
+  }
+  try {
+    const a = document.createElement('a');
+    a.href = dataURL; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('Downloaded');
+  } catch(e) {
+    openImageInTab(blob, dataURL, fname);
+  }
+}
+
+// Draw a centred gradient horizontal line
+function drawGradLine(ctx, x1, y1, x2, y2, colour, alpha) {
+  const g = ctx.createLinearGradient(x1, 0, x2, 0);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(0.5, colour);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha  = alpha;
+  ctx.strokeStyle  = g;
+  ctx.lineWidth    = 1;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.globalAlpha  = 1;
+}
+
+// Rounded rectangle path helper
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// ─── DISCORD TEXT GENERATION ──────────────────────
+function switchShareTab(name) {
+  document.querySelectorAll('.share-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.share-tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('sharePane' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  if (name === 'discord') generateDiscordText();
+}
+
+function onShareTargetChange() {
+  // If currently on Discord tab, regenerate
+  if (document.getElementById('sharePaneDiscord').classList.contains('active')) {
+    generateDiscordText();
+  }
+}
+
+function getScoredForShare() {
+  const target = document.getElementById('shareTarget').value;
+  const players = Object.entries(S.players).map(([id,p])=>({id,...p}));
+  let scored, title;
+  if (target === 'overall') {
+    title  = 'Overall Standings';
+    scored = players.map(p => ({...p, pts: overallPts(p.id)}));
+  } else {
+    const comp = S.comps[target];
+    title  = comp?.name || '';
+    const cp = S.compPts[target] || {};
+    scored = players.map(p => ({...p, pts: cp[p.id] || 0}));
+  }
+  scored.sort((a,b) => b.pts - a.pts);
+  return { scored, title };
+}
+
+function generateDiscordText() {
+  const style = document.getElementById('discordStyle').value;
+  const note  = document.getElementById('discordNote').value.trim();
+  const { scored, title } = getScoredForShare();
+  const headerName = (S.settings.title || 'The Leaderboard').toUpperCase();
+
+  if (!scored.length) {
+    document.getElementById('discordText').value = '_No players yet._';
+    document.getElementById('discordPreview').innerHTML = renderDiscordPreview('_No players yet._');
+    return;
+  }
+
+  let text = '';
+  if (style === 'ansi') {
+    text = buildAnsi(scored, title, headerName, note);
+  } else if (style === 'bars') {
+    text = buildBars(scored, title, headerName, note);
+  } else if (style === 'medals') {
+    text = buildMedals(scored, title, headerName, note);
+  } else if (style === 'table') {
+    text = buildTable(scored, title, headerName, note);
+  }
+
+  document.getElementById('discordText').value = text;
+  document.getElementById('discordPreview').innerHTML = renderDiscordPreview(text);
+}
+
+// ── ANSI block — colours render in actual Discord ──
+function buildAnsi(scored, title, headerName, note) {
+  const maxPts  = Math.max(...scored.map(s=>s.pts), 1);
+  const maxLen  = Math.max(...scored.map(s=>s.name.length), 4);
+  const padName = (n) => n.length > 16 ? n.slice(0,15)+'…' : n.padEnd(Math.min(16, maxLen), ' ');
+  const barWidth = 14;
+
+  // ANSI codes for Discord:
+  //   \u001b[2;33m = yellow (bold), [2;31m = red, [2;36m = cyan, [2;37m = white, [2;30m = grey
+  //   \u001b[0m   = reset
+  const Y = '\u001b[2;33m', R = '\u001b[2;31m', C = '\u001b[2;36m', W = '\u001b[2;37m', G = '\u001b[2;30m', X = '\u001b[0m';
+  const medals = ['🥇','🥈','🥉'];
+
+  let lines = [];
+  lines.push(`${Y}${headerName}${X}`);
+  lines.push(`${G}${title.toUpperCase()}${X}`);
+  if (note) lines.push(`${C}${note}${X}`);
+  lines.push('');
+
+  scored.forEach((p, i) => {
+    const rank = i < 3 ? medals[i] : ` ${i+1} `.padStart(3,' ').padEnd(3,' ');
+    const filled = Math.round((p.pts / maxPts) * barWidth);
+    const bar    = '█'.repeat(Math.max(1, filled)) + '░'.repeat(Math.max(0, barWidth - Math.max(1,filled)));
+    const colour = i === 0 ? Y : i === 1 ? W : i === 2 ? R : G;
+    const ptsStr = String(p.pts).padStart(3,' ');
+    lines.push(`${colour}${rank} ${padName(p.name)} ${bar} ${ptsStr} pts${X}`);
+  });
+
+  // Wrap in ANSI code block
+  let out = `## 🏆 ${headerName}\n`;
+  if (note) out += `**${note}**\n`;
+  out += '```ansi\n' + lines.join('\n') + '\n```';
+  return out;
+}
+
+// ── Visual bars (no ANSI, just unicode) ──
+function buildBars(scored, title, headerName, note) {
+  const maxPts = Math.max(...scored.map(s=>s.pts), 1);
+  const barW   = 12;
+  const medals = ['🥇','🥈','🥉'];
+
+  let out = `## 🏆 ${headerName}\n`;
+  out += `### ${title}\n`;
+  if (note) out += `*${note}*\n`;
+  out += '\n';
+  scored.forEach((p, i) => {
+    const rank = i < 3 ? medals[i] : `\`${String(i+1).padStart(2,' ')}\``;
+    const filled = Math.round((p.pts / maxPts) * barW);
+    const bar    = '🟨'.repeat(Math.max(1, Math.min(barW, filled))) + '⬛'.repeat(Math.max(0, barW - Math.max(1, Math.min(barW, filled))));
+    out += `${rank} **${p.name}** — \`${p.pts} pts\`\n${bar}\n`;
+  });
+  return out;
+}
+
+// ── Compact medals ──
+function buildMedals(scored, title, headerName, note) {
+  const medals = ['🥇','🥈','🥉'];
+  let out = `## 🏆 ${headerName} — ${title}\n`;
+  if (note) out += `*${note}*\n`;
+  out += '\n';
+  scored.forEach((p, i) => {
+    const rank = i < 3 ? medals[i] : `**${i+1}.**`;
+    out += `${rank} **${p.name}** • \`${p.pts} pts\`\n`;
+  });
+  return out;
+}
+
+// ── Table inside code block ──
+function buildTable(scored, title, headerName, note) {
+  const maxLen = Math.max(...scored.map(s=>s.name.length), 6);
+  const nameW  = Math.min(20, Math.max(8, maxLen));
+  const pad    = (s, w) => s.length > w ? s.slice(0, w-1) + '…' : s.padEnd(w, ' ');
+
+  let out = `## 🏆 ${headerName}\n`;
+  out += `### ${title}\n`;
+  if (note) out += `*${note}*\n`;
+  out += '```\n';
+  out += `# │ ${pad('Player', nameW)} │  Pts\n`;
+  out += `──┼─${'─'.repeat(nameW)}─┼──────\n`;
+  scored.forEach((p, i) => {
+    const rankStr = String(i+1).padStart(2,' ');
+    const ptsStr  = String(p.pts).padStart(4,' ');
+    out += `${rankStr}│ ${pad(p.name, nameW)} │ ${ptsStr}\n`;
+  });
+  out += '```';
+  return out;
+}
+
+// ── Render a Discord-like preview from the markdown text ──
+function renderDiscordPreview(md) {
+  // Very simple markdown-to-HTML for preview (escaped first)
+  let html = md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Code blocks (must come first)
+  html = html.replace(/```ansi\n([\s\S]*?)```/g, (_, code) => {
+    // Convert ANSI codes to spans
+    const ansiCode = code
+      .replace(/\u001b\[2;33m/g, '<span class="ansi-yellow">')
+      .replace(/\u001b\[2;31m/g, '<span class="ansi-red">')
+      .replace(/\u001b\[2;36m/g, '<span class="ansi-cyan">')
+      .replace(/\u001b\[2;37m/g, '<span class="ansi-white">')
+      .replace(/\u001b\[2;30m/g, '<span class="ansi-grey">')
+      .replace(/\u001b\[2;32m/g, '<span class="ansi-green">')
+      .replace(/\u001b\[0m/g, '</span>');
+    return '<pre class="ansi">' + ansiCode + '</pre>';
+  });
+  html = html.replace(/```\n?([\s\S]*?)```/g, (_, code) => '<pre>' + code + '</pre>');
+
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<div class="header-line">$1</div>');
+  html = html.replace(/^## (.+)$/gm, '<div class="header-line" style="font-size:1.1rem">$1</div>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  // Italic
+  html = html.replace(/(?:^|\s)\*(.+?)\*/g, ' <i>$1</i>');
+  html = html.replace(/_(.+?)_/g, '<i>$1</i>');
+  // Inline code
+  html = html.replace(/`([^`]+?)`/g, '<code style="background:#2b2d31;padding:1px 5px;border-radius:3px;font-family:Consolas,monospace;font-size:.85em">$1</code>');
+  // Newlines
+  html = html.replace(/\n/g, '<br>');
+
+  const now = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  const botName = S.settings.title || 'Leaderboard';
+  return `<div class="author">
+    <div class="avatar">🏆</div>
+    <span class="name">${esc(botName)}</span>
+    <span class="ts">Today at ${now}</span>
+  </div>
+  <div class="body">${html}</div>`;
+}
+
+async function copyDiscordText() {
+  const text = document.getElementById('discordText').value;
+  const btn  = document.getElementById('copyBtn');
+  if (!text) return;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.innerHTML = '✓ Copied!';
+    toast('Copied — paste into Discord');
+    setTimeout(() => btn.innerHTML = '📋 Copy to Clipboard', 2000);
+  } catch(e) {
+    // Fallback: select the textarea
+    const ta = document.getElementById('discordText');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    try {
+      document.execCommand('copy');
+      btn.innerHTML = '✓ Copied!';
+      toast('Copied');
+      setTimeout(() => btn.innerHTML = '📋 Copy to Clipboard', 2000);
+    } catch(e2) {
+      toast('Select the text manually and copy', true);
+    }
+  }
+}
+
+// ─── MODALS ───────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg =>
+  bg.addEventListener('click', e=>{ if(e.target===bg) bg.classList.remove('open'); })
+);
+
+function openConfirm(title, msg, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent   = msg;
+  const old = document.getElementById('confirmYesBtn');
+  const neo = old.cloneNode(true);
+  old.parentNode.replaceChild(neo, old);
+  neo.addEventListener('click', ()=>{ closeModal('confirmModal'); cb(); });
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+document.getElementById('clearLogBtn').addEventListener('click', ()=>
+  openConfirm('Clear the entire activity log?','This cannot be undone.',clearLog));
+document.getElementById('resetPtsBtn').addEventListener('click', ()=>
+  openConfirm('Reset ALL points to zero?','Player list and competitions are kept. Cannot be undone.',resetAllPoints));
+document.getElementById('nukeBtn').addEventListener('click', ()=>
+  openConfirm('Delete EVERYTHING?','Players, competitions, and log removed. Settings kept.',nukeAll));
+
+// ─── TOAST ────────────────────────────────
+let _tt;
+function toast(msg, err=false) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(err?' err':'');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.className='',2800);
+}
+
+
+</script>
+</body>
+</html>
