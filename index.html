@@ -452,9 +452,12 @@ textarea{resize:vertical;min-height:55px;}
 
 <script>
 // ══════════════════════════════════════════
-//  🔧 PASTE YOUR FIREBASE CONFIG HERE
+//  🔧 FIREBASE CONFIG
+//  You can edit this block, OR replace it entirely with the
+//  config snippet copied from Firebase (which uses lowercase
+//  'firebaseConfig'). Both work — see init code below.
 // ══════════════════════════════════════════
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCONsU__ad6HfIBEaCH10VPAygXTsP18-0",
   authDomain: "disc-leaderboard.firebaseapp.com",
   databaseURL: "https://disc-leaderboard-default-rtdb.europe-west1.firebasedatabase.app",
@@ -464,6 +467,12 @@ const firebaseConfig = {
   appId: "1:926284289144:web:b3919570c9d72217f5498d"
 };
 // ══════════════════════════════════════════
+
+// Detect whichever variable name is in scope (FIREBASE_CONFIG or firebaseConfig)
+const _FB_CFG =
+  (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey) ? FIREBASE_CONFIG :
+  (typeof firebaseConfig  !== 'undefined' && firebaseConfig  && firebaseConfig.apiKey)  ? firebaseConfig  :
+  null;
 
 // ─── STATE ───────────────────────────────
 let S = {
@@ -477,13 +486,14 @@ let isAdmin = false, currentView = 'overall', db = null, fbReady = false;
 
 // ─── FIREBASE INIT ────────────────────────
 (function() {
-  const configured = !FIREBASE_CONFIG.apiKey.includes('PASTE');
+  const cfg = _FB_CFG;
+  const configured = cfg && !cfg.apiKey.includes('PASTE');
   if (!configured) {
     document.getElementById('setupBanner').style.display = 'block';
     loadLocal(); renderAll(); return;
   }
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
+    firebase.initializeApp(cfg);
     db = firebase.database();
     fbReady = true;
     db.ref('/').on('value', snap => {
@@ -1251,7 +1261,8 @@ function generateDiscordText() {
 function buildAnsi(scored, title, headerName, note) {
   const maxPts  = Math.max(...scored.map(s=>s.pts), 1);
   const maxLen  = Math.max(...scored.map(s=>s.name.length), 4);
-  const padName = (n) => n.length > 16 ? n.slice(0,15)+'…' : n.padEnd(Math.min(16, maxLen), ' ');
+  const nameW   = Math.min(16, Math.max(8, maxLen));
+  const padName = (n) => n.length > nameW ? n.slice(0,nameW-1)+'…' : n.padEnd(nameW, ' ');
   const barWidth = 14;
 
   // ANSI codes for Discord:
@@ -1260,6 +1271,13 @@ function buildAnsi(scored, title, headerName, note) {
   const Y = '\u001b[2;33m', R = '\u001b[2;31m', C = '\u001b[2;36m', W = '\u001b[2;37m', G = '\u001b[2;30m', X = '\u001b[0m';
   const medals = ['🥇','🥈','🥉'];
 
+  // Note: emojis render as ~2 char widths in Discord monospace.
+  // For consistent alignment, use 2-space padding for non-medal ranks so columns line up.
+  const formatRank = (i) => {
+    if (i < 3) return medals[i];          // 1 emoji = ~2 columns visually
+    return String(i+1).padStart(2,' ');   // " 4", " 5", "10" etc. — 2 columns
+  };
+
   let lines = [];
   lines.push(`${Y}${headerName}${X}`);
   lines.push(`${G}${title.toUpperCase()}${X}`);
@@ -1267,12 +1285,12 @@ function buildAnsi(scored, title, headerName, note) {
   lines.push('');
 
   scored.forEach((p, i) => {
-    const rank = i < 3 ? medals[i] : ` ${i+1} `.padStart(3,' ').padEnd(3,' ');
+    const rank   = formatRank(i);
     const filled = Math.round((p.pts / maxPts) * barWidth);
     const bar    = '█'.repeat(Math.max(1, filled)) + '░'.repeat(Math.max(0, barWidth - Math.max(1,filled)));
     const colour = i === 0 ? Y : i === 1 ? W : i === 2 ? R : G;
     const ptsStr = String(p.pts).padStart(3,' ');
-    lines.push(`${colour}${rank} ${padName(p.name)} ${bar} ${ptsStr} pts${X}`);
+    lines.push(`${colour}${rank}  ${padName(p.name)} ${bar} ${ptsStr} pts${X}`);
   });
 
   // Wrap in ANSI code block
@@ -1324,12 +1342,12 @@ function buildTable(scored, title, headerName, note) {
   out += `### ${title}\n`;
   if (note) out += `*${note}*\n`;
   out += '```\n';
-  out += `# │ ${pad('Player', nameW)} │  Pts\n`;
-  out += `──┼─${'─'.repeat(nameW)}─┼──────\n`;
+  out += ` # │ ${pad('Player', nameW)} │  Pts\n`;
+  out += `───┼─${'─'.repeat(nameW)}─┼──────\n`;
   scored.forEach((p, i) => {
     const rankStr = String(i+1).padStart(2,' ');
     const ptsStr  = String(p.pts).padStart(4,' ');
-    out += `${rankStr}│ ${pad(p.name, nameW)} │ ${ptsStr}\n`;
+    out += `${rankStr} │ ${pad(p.name, nameW)} │ ${ptsStr}\n`;
   });
   out += '```';
   return out;
@@ -1384,25 +1402,37 @@ async function copyDiscordText() {
   const btn  = document.getElementById('copyBtn');
   if (!text) return;
 
-  try {
-    await navigator.clipboard.writeText(text);
+  const showSuccess = () => {
     btn.innerHTML = '✓ Copied!';
     toast('Copied — paste into Discord');
     setTimeout(() => btn.innerHTML = '📋 Copy to Clipboard', 2000);
-  } catch(e) {
-    // Fallback: select the textarea
-    const ta = document.getElementById('discordText');
-    ta.select();
-    ta.setSelectionRange(0, 99999);
-    try {
-      document.execCommand('copy');
-      btn.innerHTML = '✓ Copied!';
-      toast('Copied');
-      setTimeout(() => btn.innerHTML = '📋 Copy to Clipboard', 2000);
-    } catch(e2) {
-      toast('Select the text manually and copy', true);
-    }
-  }
+  };
+
+  // Method 1: Select the textarea and use execCommand (most reliable)
+  const ta = document.getElementById('discordText');
+  ta.removeAttribute('readonly');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, 99999);
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch(e) {}
+  ta.setAttribute('readonly', '');
+
+  if (copied) { showSuccess(); return; }
+
+  // Method 2: modern Clipboard API
+  try {
+    await navigator.clipboard.writeText(text);
+    showSuccess();
+    return;
+  } catch(e) {}
+
+  // Method 3: leave text selected so user can ctrl-c / long-press
+  ta.removeAttribute('readonly');
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, 99999);
+  toast('Text selected — press Ctrl+C (or long-press → Copy)', true);
 }
 
 // ─── MODALS ───────────────────────────────
